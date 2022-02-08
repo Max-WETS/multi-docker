@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t stewmix/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run stewmix/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t stewmix/multi-client ./client
+  - docker build -t stewmix/multi-nginx ./nginx
+  - docker build -t stewmix/multi-server ./server
+  - docker build -t stewmix/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to Docker hub
+  - docker push stewmix/multi-client
+  - docker push stewmix/multi-nginx
+  - docker push stewmix/multi-server
+  - docker push stewmix/multi-worker
